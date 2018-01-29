@@ -25,19 +25,14 @@ function Player(game, x, y) {
     /** @type {Phaser.Weapon} */
     this.weapon = this.game.add.weapon(60, 'bullet:laser-green');
 
-    /** @type {number} shots before weapon overheat */
-    this.weapon.MAX_SHOTS_LIMIT = 100;
-
-    this.weapon.fireLimit = this.weapon.MAX_SHOTS_LIMIT;
+    /** @type {number} weapon heat value */
+    this.weapon.heatLimit = 100;
 
     /** @type {number} weapon heat value */
     this.weapon.heat = 0;
 
     /** @type {boolean} true when the weapon overheat: firelimit reached*/
     this.weapon.isOverHeated = false;
-
-    /** @type {Phaser.Timer} */
-    this.weapon.cooldownTimer = null;
 
     /* ============================================================================================================== */
 
@@ -49,6 +44,17 @@ Player.prototype = Object.create(window.Phaser.Sprite.prototype);
 
 /** @type {Player} */
 Player.prototype.constructor = Player;
+
+Player.prototype.update = function() {
+  if(this.game.input.activePointer.isUp && this.weapon.heat > 0 && !this.weapon.isOverHeated) {
+      this.weapon.heat -= 0.5;
+  } else if(this.game.input.activePointer.isUp && this.weapon.heat > 0 && this.weapon.isOverHeated) {
+      this.weapon.heat -= 0.2;
+      if(this.weapon.heat <= 0) {
+          this.weapon.isOverHeated = false;
+      }
+  }
+};
 
 /**
  *
@@ -152,8 +158,6 @@ Player.prototype._initWeapon = function() {
     this.weapon.bulletKillType = window.Phaser.Weapon.KILL_CAMERA_BOUNDS;
 
     this.weapon.onFire.add(this._increaseWeaponHeat, this);
-    this.game.input.onUp.add(this._handleWeaponHeat, this);
-    this.weapon.onFireLimit.add(this._handleWeaponOverHeat, this);
 
 };
 
@@ -163,47 +167,10 @@ Player.prototype._initWeapon = function() {
  */
 Player.prototype._increaseWeaponHeat = function() {
     if(!this.weapon.isOverHeated) {
-        if(this.weapon.cooldownTimer && this.weapon.cooldownTimer.running) {
-            this.weapon.cooldownTimer.stop(true);
-            this.weapon.cooldownTimer.destroy();
+        this.weapon.heat += 2;
+        if(this.weapon.heat >= this.weapon.heatLimit) {
+            this.weapon.isOverHeated = true;
         }
-        this.weapon.heat++;
     }
 };
 
-/**
- * Cooldown heated (not overheated) weapon
- * @private
- */
-Player.prototype._handleWeaponHeat = function() {
-    if(!this.weapon.isOverHeated && this.weapon.heat > 0) {
-        this._cooldownWeapon();
-    }
-};
-
-/**
- * Cooldown overheated weapon
- * @private
- */
-Player.prototype._handleWeaponOverHeat = function() {
-    this.weapon.isOverHeated = true;
-    this.game.time.events.add(1000, this._cooldownWeapon, this);
-};
-
-/**
- *
- * @private
- */
-Player.prototype._cooldownWeapon = function() {
-    this.weapon.cooldownTimer = this.game.time.create();
-    this.weapon.cooldownTimer.loop(100, function() {
-        this.weapon.heat--;
-        this.weapon.resetShots(this.weapon.MAX_SHOTS_LIMIT - this.weapon.heat);
-        if(this.weapon.heat <= 0) {
-            this.weapon.isOverHeated = false;
-            this.weapon.cooldownTimer.stop(true);
-            this.weapon.cooldownTimer.destroy();
-        }
-    }, this);
-    this.weapon.cooldownTimer.start();
-};
