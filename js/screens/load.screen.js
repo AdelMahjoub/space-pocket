@@ -1,18 +1,16 @@
-const Game = {};
-
 /**
  * @type {Phaser.State}
  * @param {Phaser.Game} game
  * @constructor
  */
-Game.Loading = function (game) {
+Game.Load = function (game) {
 
     /**  @type {Phaser.Text} */
     this.loadingText = null;
 
 };
 
-Game.Loading.prototype = {
+Game.Load.prototype = {
 
     init: function () {
         this._spawnLoadingText();
@@ -20,31 +18,30 @@ Game.Loading.prototype = {
 
     preload: function () {
 
-        this.load.path = 'images/';
-        this.load.image('bg:purple', 'Background/backgroundColor.png');
-        this.load.image('bg:stars', 'Background/starBackground.png');
+        this.load.path = 'assets/';
 
-        this.load.image('icon:life','life.png');
+        this.load.image('bg:purple', 'backgrounds/purple.png');
+        this.load.image('bg:stars', 'backgrounds/stars.png');
 
-        this.load.image('bullet:laser-green', 'laserGreen.png');
-        this.load.image('bullet:laser-red', 'laserRed.png');
+        this.load.image('icon:life','icons/life.png');
 
-        this.load.image('effect:laser-green', 'laserGreenShot.png');
-        this.load.image('effect:laser-red', 'laserRedShot.png');
+        this.load.image('bullet:laser-green', 'sprites/laserGreen.png');
 
-        this.load.image('player:ship', 'player.png');
+        this.load.image('player:ship', 'sprites/player.png');
 
-        this.load.image('enemy:ship', 'enemyShip.png');
-        this.load.image('enemy:ufo', 'enemyUFO.png');
+        this.load.image('hud:heat-meter_container', 'ui/heat-meter_container.png');
+        this.load.image('hud:heat-meter_inner', 'ui/heat-meter_inner.png');
 
-        this.load.image('hud:heat-meter_container', 'heat-meter_container.png');
-        this.load.image('hud:heat-meter_inner', 'heat-meter_inner.png');
+        this.load.spritesheet('ui:buttons', 'ui/buttons.png', 190, 50);
+
+        this.load.audio('sfx:btn-hover', 'audio/btn_hover.ogg');
+        this.load.audio('sfx:btn-click', 'audio/btn_click.ogg');
 
         this.load.onFileComplete.add(this._fileLoaded, this);
     },
 
     create: function () {
-        this.state.start('state:start');
+        this.state.start('screen:start_menu');
     },
 
     /**

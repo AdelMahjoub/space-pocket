@@ -36,11 +36,8 @@ function Player(game, x, y) {
     /** @type {boolean} true when the weapon overheat: firelimit reached*/
     this.weapon.isOverHeated = false;
 
-    /** @type {null|number} cooling setInterval timer */
-    this.weapon.coolingTimer = null;
-
-    /** @type {null|number} delay before cooling the weapon after overheat: setTimout timer */
-    this.weapon.coolingDelayTimer = null;
+    /** @type {Phaser.Timer} */
+    this.weapon.cooldownTimer = null;
 
     /* ============================================================================================================== */
 
@@ -165,13 +162,13 @@ Player.prototype._initWeapon = function() {
  * @private
  */
 Player.prototype._increaseWeaponHeat = function() {
-    // Stop weapon cooldown if started
-    if(this.weapon.coolingTimer) {
-        window.clearInterval(this.weapon.coolingTimer);
-        this.weapon.coolingTimer = null;
+    if(!this.weapon.isOverHeated) {
+        if(this.weapon.cooldownTimer && this.weapon.cooldownTimer.running) {
+            this.weapon.cooldownTimer.stop(true);
+            this.weapon.cooldownTimer.destroy();
+        }
+        this.weapon.heat++;
     }
-    this.weapon.heat++;
-    console.log('weapon is heating: ', this.weapon.heat);
 };
 
 /**
@@ -179,9 +176,8 @@ Player.prototype._increaseWeaponHeat = function() {
  * @private
  */
 Player.prototype._handleWeaponHeat = function() {
-    // weapon not overheated and weapon cooldown not started
-    if(!this.weapon.isOverHeated && !this.weapon.coolingTimer) {
-        this.weapon.coolingTimer = this._cooldownWeapon(50);
+    if(!this.weapon.isOverHeated && this.weapon.heat > 0) {
+        this._cooldownWeapon();
     }
 };
 
@@ -191,27 +187,23 @@ Player.prototype._handleWeaponHeat = function() {
  */
 Player.prototype._handleWeaponOverHeat = function() {
     this.weapon.isOverHeated = true;
-
-    this.weapon.coolingDelayTimer = setTimeout(function() {
-        this.weapon.coolingTimer = this._cooldownWeapon(100);
-    }.bind(this), 1000);
+    this.game.time.events.add(1000, this._cooldownWeapon, this);
 };
 
 /**
- * Gradually decrease weapon heat
- * @param {number} interval
- * @returns {number}
+ *
  * @private
  */
-Player.prototype._cooldownWeapon = function(interval) {
-    return setInterval(function() {
+Player.prototype._cooldownWeapon = function() {
+    this.weapon.cooldownTimer = this.game.time.create();
+    this.weapon.cooldownTimer.loop(100, function() {
         this.weapon.heat--;
         this.weapon.resetShots(this.weapon.MAX_SHOTS_LIMIT - this.weapon.heat);
-        console.log(this.weapon.isOverHeated ? 'cooling weapon after overheat' : 'cooling weapon ', this.weapon.heat);
         if(this.weapon.heat <= 0) {
-            clearInterval(this.weapon.coolingTimer);
             this.weapon.isOverHeated = false;
-            console.log(this.weapon.isOverHeated ? 'weapon cooled after overheat !' : 'weapon cooled !', this.weapon.heat);
+            this.weapon.cooldownTimer.stop(true);
+            this.weapon.cooldownTimer.destroy();
         }
-    }.bind(this), interval);
+    }, this);
+    this.weapon.cooldownTimer.start();
 };
