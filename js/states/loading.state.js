@@ -37,6 +37,9 @@ Game.Loading.prototype = {
         this.load.image('enemy:ship', 'enemyShip.png');
         this.load.image('enemy:ufo', 'enemyUFO.png');
 
+        this.load.image('hud:heat-meter_container', 'heat-meter_container.png');
+        this.load.image('hud:heat-meter_inner', 'heat-meter_inner.png');
+
         this.load.onFileComplete.add(this._fileLoaded, this);
     },
 
